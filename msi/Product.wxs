@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Product.wxs: ScreenCast MSI 安装包 (由 pack.ps1 调用 candle/light 编译)
+  构建变量: -dVersion  MSI 版本号 (a.b.c, 例如 3.4.0)  由 pack.ps1 传入, 不要在此硬编码
+
+  安装流程 (WixUI_InstallDir + 自定义 InstallModeDlg):
+    欢迎页 -> 选择安装模式(学生端/教师端 单选) -> 选择安装目录 -> 确认安装
+  特性:
+    - 学生端: client_gui.exe + client_console.exe   (条件 INSTALLMODE=student)
+    - 教师端: teacher_gui.exe + teacher_cli.exe     (条件 INSTALLMODE=teacher)
+    - FFmpeg 运行库 DLL 两种模式共用
+    - 自动创建「桌面」和「开始菜单」快捷方式(仅所选模式的程序)
+    - 支持升级(高版本覆盖安装, 自动卸载旧版)与标准卸载(控制面板/设置->应用)
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <Product Id="*"
+           Name="ScreenCast 屏幕共享"
+           Language="2052"
+           Version="$(var.Version)"
+           Manufacturer="ScreenCast"
+           Codepage="65001"
+           UpgradeCode="AF0E9D97-CFB6-4E11-8D26-030BADA946B5">
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="局域网屏幕共享(教师端 / 学生端)"
+             Manufacturer="ScreenCast"
+             Keywords="ScreenCast,屏幕共享,教师端,学生端"
+             Platform="x64"
+             Comments="ScreenCast v$(var.Version) -- 局域网屏幕共享" />
+
+    <!-- 升级策略: 允许同版本重装; 高版本覆盖安装时先移除旧版 -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="已安装更高版本, 无法安装此版本。" />
+
+    <Property Id="INSTALLMODE" Value="student" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <Property Id="ApplicationFolderName" Value="ScreenCast" />
+
+    <Feature Id="MainFeature" Title="ScreenCast" Level="1">
+      <ComponentGroupRef Id="SharedDlls" />
+      <ComponentGroupRef Id="QtPlugins" />
+      <ComponentGroupRef Id="StudentFiles" />
+      <ComponentGroupRef Id="TeacherFiles" />
+      <ComponentGroupRef Id="DesktopShortcuts" />
+      <ComponentGroupRef Id="MenuShortcuts" />
+    </Feature>
+
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <!-- 把 InstallModeDlg 插入 WixUI_InstallDir 流程: 欢迎页 -> 选择模式 -> 安装目录
+         注意: 同一控件若存在多个 NewDialog 事件, MSI 只发布 Order 值最大的那个
+         (见 MSI SDK ControlEvent Table 文档), 因此自定义跳转必须 Order 高于 wixlib 默认值。 -->
+    <UI>
+      <DialogRef Id="InstallModeDlg" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallModeDlg" Order="2">NOT Installed</Publish>
+      <Publish Dialog="InstallModeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="1">1</Publish>
+      <Publish Dialog="InstallModeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">1</Publish>
+      <Publish Dialog="InstallModeDlg" Control="Cancel" Event="EndDialog" Value="Return" Order="1">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="InstallModeDlg" Order="2">1</Publish>
+    </UI>
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="StudentIcon" SourceFile="student.ico" />
+    <Icon Id="TeacherIcon" SourceFile="teacher.ico" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="ScreenCast" />
+      </Directory>
+      <Directory Id="DesktopFolder" />
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="ScreenCast" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <!-- 单选对话框: 学生端 / 教师端 -->
+  <Fragment>
+    <UI>
+      <Dialog Id="InstallModeDlg" Width="370" Height="270" Title="选择安装组件" NoMinimize="yes" TrackDiskSpace="yes">
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="InstallModeTitle" Type="Text" X="20" Y="52" Width="330" Height="20" Text="{\WixUI_Font_Title}选择安装组件" />
+        <Control Id="InstallModeDesc" Type="Text" X="20" Y="76" Width="330" Height="30" Text="选择要安装的端。学生端用于观看教师端分享的屏幕画面, 教师端用于把自己的屏幕画面分享给学生。\n安装完成后自动创建桌面与开始菜单快捷方式。" />
+
+        <Control Id="ModeRadio" Type="RadioButtonGroup" X="20" Y="112" Width="330" Height="80" Property="INSTALLMODE">
+          <RadioButtonGroup Property="INSTALLMODE">
+            <RadioButton Value="student" X="0" Y="0" Width="300" Height="24" Text="学生端(观看教师分享的屏幕画面)" />
+            <RadioButton Value="teacher" X="0" Y="30" Width="300" Height="24" Text="教师端(分享屏幕画面给学生)" />
+          </RadioButtonGroup>
+        </Control>
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&lt; 上一步" />
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Text="下一步 &gt;" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Text="取消" />
+      </Dialog>
+    </UI>
+  </Fragment>
+
+  <!-- 共享 FFmpeg + Qt6 运行时 DLL (两种模式都装) -->
+  <Fragment>
+    <ComponentGroup Id="SharedDlls" Directory="INSTALLFOLDER">
+      <Component Id="avcodec.dll" Guid="*" Win64="yes">
+        <File Id="avcodec_dll" Source="..\build\Release\avcodec-63.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="avutil.dll" Guid="*" Win64="yes">
+        <File Id="avutil_dll" Source="..\build\Release\avutil-61.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="swscale.dll" Guid="*" Win64="yes">
+        <File Id="swscale_dll" Source="..\build\Release\swscale-10.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="swresample.dll" Guid="*" Win64="yes">
+        <File Id="swresample_dll" Source="..\build\Release\swresample-7.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="client_config.txt" Guid="*" Win64="yes">
+        <File Id="client_config" Source="..\build\Release\client_config.txt" KeyPath="yes" />
+      </Component>
+
+      <!-- Qt6 runtime (LGPL-3.0, dynamic linking; license text shipped alongside) -->
+      <Component Id="qt6core.dll" Guid="*" Win64="yes">
+        <File Id="qt6core_dll" Source="..\build\Release\Qt6Core.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qt6gui.dll" Guid="*" Win64="yes">
+        <File Id="qt6gui_dll" Source="..\build\Release\Qt6Gui.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qt6network.dll" Guid="*" Win64="yes">
+        <File Id="qt6network_dll" Source="..\build\Release\Qt6Network.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qt6svg.dll" Guid="*" Win64="yes">
+        <File Id="qt6svg_dll" Source="..\build\Release\Qt6Svg.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qt6widgets.dll" Guid="*" Win64="yes">
+        <File Id="qt6widgets_dll" Source="..\build\Release\Qt6Widgets.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="d3dcompiler_47.dll" Guid="*" Win64="yes">
+        <File Id="d3dcompiler_47_dll" Source="..\build\Release\d3dcompiler_47.dll" KeyPath="yes" />
+      </Component>
+
+      <!-- VC++ 2015-2022 运行库 (Qt6 msvc 版依赖; 目标机未装 redist 时会导致 Qt 平台插件加载失败) -->
+      <Component Id="msvcp140.dll" Guid="*" Win64="yes">
+        <File Id="msvcp140_dll" Source="..\build\Release\msvcp140.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="msvcp140_1.dll" Guid="*" Win64="yes">
+        <File Id="msvcp140_1_dll" Source="..\build\Release\msvcp140_1.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="msvcp140_2.dll" Guid="*" Win64="yes">
+        <File Id="msvcp140_2_dll" Source="..\build\Release\msvcp140_2.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="msvcp140_atomic_wait.dll" Guid="*" Win64="yes">
+        <File Id="msvcp140_atomic_wait_dll" Source="..\build\Release\msvcp140_atomic_wait.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="msvcp140_codecvt_ids.dll" Guid="*" Win64="yes">
+        <File Id="msvcp140_codecvt_ids_dll" Source="..\build\Release\msvcp140_codecvt_ids.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="vcruntime140.dll" Guid="*" Win64="yes">
+        <File Id="vcruntime140_dll" Source="..\build\Release\vcruntime140.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="vcruntime140_1.dll" Guid="*" Win64="yes">
+        <File Id="vcruntime140_1_dll" Source="..\build\Release\vcruntime140_1.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="vcruntime140_threads.dll" Guid="*" Win64="yes">
+        <File Id="vcruntime140_threads_dll" Source="..\build\Release\vcruntime140_threads.dll" KeyPath="yes" />
+      </Component>
+
+      <Component Id="lgpl_license" Guid="*" Win64="yes">
+        <File Id="lgpl_license_txt" Source="..\build\Release\LGPL-3.0.txt" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- Qt6 platform/plugin subdirectories -->
+  <Fragment>
+    <ComponentGroup Id="QtPlugins">
+      <Component Id="qwindows.dll" Guid="*" Win64="yes" Directory="QPlatformsDir">
+        <File Id="qwindows_dll" Source="..\build\Release\platforms\qwindows.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qmodernwindowsstyle.dll" Guid="*" Win64="yes" Directory="QStylesDir">
+        <File Id="qmodernwindowsstyle_dll" Source="..\build\Release\styles\qmodernwindowsstyle.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qcertonlybackend.dll" Guid="*" Win64="yes" Directory="QTlsDir">
+        <File Id="qcertonlybackend_dll" Source="..\build\Release\tls\qcertonlybackend.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qschannelbackend.dll" Guid="*" Win64="yes" Directory="QTlsDir">
+        <File Id="qschannelbackend_dll" Source="..\build\Release\tls\qschannelbackend.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qgif.dll" Guid="*" Win64="yes" Directory="QImageFormatsDir">
+        <File Id="qgif_dll" Source="..\build\Release\imageformats\qgif.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qico.dll" Guid="*" Win64="yes" Directory="QImageFormatsDir">
+        <File Id="qico_dll" Source="..\build\Release\imageformats\qico.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qjpeg.dll" Guid="*" Win64="yes" Directory="QImageFormatsDir">
+        <File Id="qjpeg_dll" Source="..\build\Release\imageformats\qjpeg.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qsvg.dll" Guid="*" Win64="yes" Directory="QImageFormatsDir">
+        <File Id="qsvg_dll" Source="..\build\Release\imageformats\qsvg.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qsvgicon.dll" Guid="*" Win64="yes" Directory="QIconEnginesDir">
+        <File Id="qsvgicon_dll" Source="..\build\Release\iconengines\qsvgicon.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qnetworklistmanager.dll" Guid="*" Win64="yes" Directory="QNetInfoDir">
+        <File Id="qnetworklistmanager_dll" Source="..\build\Release\networkinformation\qnetworklistmanager.dll" KeyPath="yes" />
+      </Component>
+      <Component Id="qtuiotouchplugin.dll" Guid="*" Win64="yes" Directory="QGenericDir">
+        <File Id="qtuiotouchplugin_dll" Source="..\build\Release\generic\qtuiotouchplugin.dll" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Directory Id="QPlatformsDir" Name="platforms" />
+      <Directory Id="QStylesDir" Name="styles" />
+      <Directory Id="QTlsDir" Name="tls" />
+      <Directory Id="QImageFormatsDir" Name="imageformats" />
+      <Directory Id="QIconEnginesDir" Name="iconengines" />
+      <Directory Id="QNetInfoDir" Name="networkinformation" />
+      <Directory Id="QGenericDir" Name="generic" />
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- 学生端 (条件: INSTALLMODE=student) -->
+  <Fragment>
+    <ComponentGroup Id="StudentFiles" Directory="INSTALLFOLDER">
+      <Component Id="client_console.exe" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "student"</Condition>
+        <File Id="client_console" Source="..\build\Release\client_console.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="client_gui.exe" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "student"</Condition>
+        <File Id="client_gui" Source="..\build\Release\client_gui.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- 教师端 (条件: INSTALLMODE=teacher) -->
+  <Fragment>
+    <ComponentGroup Id="TeacherFiles" Directory="INSTALLFOLDER">
+      <Component Id="teacher_cli.exe" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "teacher"</Condition>
+        <File Id="teacher_cli" Source="..\build\Release\teacher_cli.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="teacher_gui.exe" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "teacher"</Condition>
+        <File Id="teacher_gui" Source="..\build\Release\teacher_gui.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- 桌面快捷方式 (按模式) -->
+  <Fragment>
+    <ComponentGroup Id="DesktopShortcuts" Directory="DesktopFolder">
+      <Component Id="DesktopStudentShortcut" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "student"</Condition>
+        <Shortcut Id="StudentDesktopShortcut"
+                  Directory="DesktopFolder"
+                  Name="ScreenCast 学生端"
+                  Target="[INSTALLFOLDER]client_gui.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="StudentIcon" />
+        <RemoveFolder Id="RemoveDesktopStudentFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ScreenCast\Shortcuts" Name="DesktopStudent" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <Component Id="DesktopTeacherShortcut" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "teacher"</Condition>
+        <Shortcut Id="TeacherDesktopShortcut"
+                  Directory="DesktopFolder"
+                  Name="ScreenCast 教师端"
+                  Target="[INSTALLFOLDER]teacher_gui.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="TeacherIcon" />
+        <RemoveFolder Id="RemoveDesktopTeacherFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ScreenCast\Shortcuts" Name="DesktopTeacher" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- 开始菜单快捷方式 (按模式) -->
+  <Fragment>
+    <ComponentGroup Id="MenuShortcuts" Directory="ApplicationProgramsFolder">
+      <Component Id="MenuStudentShortcut" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "student"</Condition>
+        <Shortcut Id="StudentMenuShortcut"
+                  Directory="ApplicationProgramsFolder"
+                  Name="ScreenCast 学生端"
+                  Target="[INSTALLFOLDER]client_gui.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="StudentIcon" />
+        <RemoveFolder Id="RemoveMenuStudentFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ScreenCast\Shortcuts" Name="MenuStudent" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <Component Id="MenuTeacherShortcut" Guid="*" Win64="yes">
+        <Condition>INSTALLMODE = "teacher"</Condition>
+        <Shortcut Id="TeacherMenuShortcut"
+                  Directory="ApplicationProgramsFolder"
+                  Name="ScreenCast 教师端"
+                  Target="[INSTALLFOLDER]teacher_gui.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="TeacherIcon" />
+        <RemoveFolder Id="RemoveMenuTeacherFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ScreenCast\Shortcuts" Name="MenuTeacher" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+</Wix>

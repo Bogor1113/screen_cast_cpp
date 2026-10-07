@@ -1,0 +1,2 @@
+// msi/installer.rc — 安装器 exe 图标资源 (与 msi/teacher.ico 同目录, 安装器用橙粉教师端图标更醒目)
+APPICON ICON "teacher.ico"

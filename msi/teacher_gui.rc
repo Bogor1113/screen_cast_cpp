@@ -1,0 +1,2 @@
+// msi/teacher_gui.rc — 教师端 exe 图标资源 (与 msi/teacher.ico 同目录)
+APPICON ICON "teacher.ico"

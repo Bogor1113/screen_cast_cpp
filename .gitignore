@@ -1,0 +1,51 @@
+# ---------- 第三方依赖 / 工具链（体积过大，不入库）----------
+# third_party/ffmpeg（178MB DLL + 头文件/导入库）与 third_party/wix（117MB SDK）
+# 克隆后请自行下载对应版本放置，详见 README「准备依赖」一节
+third_party/
+
+# ---------- 编译产物 ----------
+build/
+out/
+cmake-build-*/
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exp
+*.dll
+*.exe
+
+# ---------- 安装包构建中间产物 ----------
+# msi/ 目录里「必需文件」与「调试截图」混放：
+#   必需 -> teacher_gui.rc / client_gui.rc / installer.rc / teacher.ico / student.ico
+#           / Product.wxs / zh-CN.wxl / make_icons.py
+#   其余 -> 120+ 张 UI 调试截图(.png/.bmp)、安装日志、预览 html，全部忽略
+msi/*
+!msi/*.rc
+!msi/*.ico
+!msi/*.wxs
+!msi/*.wxl
+!msi/make_icons.py
+*.wixobj
+*.wixpdb
+
+# ---------- QA / 审计输出 ----------
+qa_out/
+screen_cast_audit/
+
+# ---------- 日志 ----------
+*.log
+
+# ---------- 环境 / 本地工作区 ----------
+.workbuddy/
+.env
+.env.*
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.sw?

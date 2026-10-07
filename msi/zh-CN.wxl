@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  zh-CN.wxl: WixUI_InstallDir 流程对话框的中文翻译
+  由 pack.ps1 以 -cultures:zh-CN -loc msi\zh-CN.wxl 传给 light
+-->
+<WixLocalization Culture="zh-CN" Codepage="65001" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <!-- 公共按钮 -->
+  <String Id="WixUI_Next">下一步 &gt;</String>
+  <String Id="WixUI_Back">&lt; 上一步</String>
+  <String Id="WixUI_Cancel">取消</String>
+  <String Id="WixUI_Install">安装</String>
+  <String Id="WixUI_Repair">修复</String>
+  <String Id="WixUI_Remove">卸载</String>
+  <String Id="WixUI_Change">更改</String>
+  <String Id="WixUI_Finish">完成</String>
+  <String Id="WixUI_Yes">是</String>
+  <String Id="WixUI_No">否</String>
+  <String Id="WixUI_Ok">确定</String>
+  <String Id="WixUI_Close">关闭</String>
+
+  <!-- 欢迎页 -->
+  <String Id="WixUI_WelcomeDlgTitle">欢迎使用 [ProductName] 安装向导</String>
+  <String Id="WixUI_WelcomeDlgDescription">安装向导将在您的计算机上安装 [ProductName]。&#10;点击“下一步”继续, 或点击“取消”退出安装向导。</String>
+
+  <!-- 选择安装目录 -->
+  <String Id="WixUI_InstallDirDlgTitle">选择安装文件夹</String>
+  <String Id="WixUI_InstallDirDlgDescription">为 [ProductName] 选择安装文件夹。&#10;&#10;点击“下一步”安装到此文件夹, 或点击“更改”选择其他文件夹。</String>
+  <String Id="WixUI_InstallDirDlgVolumeLabel">将 [ProductName] 安装到:</String>
+  <String Id="WixUI_InstallDirDlgChangeInstallDir">更改...</String>
+
+  <!-- 确认安装 -->
+  <String Id="WixUI_VerifyReadyDlgTitle">准备安装</String>
+  <String Id="WixUI_VerifyReadyDlgInstall">向导已准备好安装 [ProductName]。&#10;点击“安装”开始安装。</String>
+  <String Id="WixUI_VerifyReadyDlgChange">点击“上一步”查看或更改任意安装设置。</String>
+
+  <!-- 安装进度 -->
+  <String Id="WixUI_ProgressDlgTitle">正在安装 [ProductName]</String>
+  <String Id="WixUI_ProgressDlgInstalling">正在安装 [ProductName], 请稍候...</String>
+  <String Id="WixUI_ProgressDlgScheduling">正在调度安装...</String>
+
+  <!-- 完成页 -->
+  <String Id="WixUI_ExitDialogTitle">安装完成</String>
+  <String Id="WixUI_ExitDialogDescription">[ProductName] 已安装完成。&#10;点击“完成”退出安装向导。</String>
+
+  <!-- 维护(已安装时) -->
+  <String Id="WixUI_MaintenanceWelcomeDlgTitle">维护 [ProductName]</String>
+  <String Id="WixUI_MaintenanceWelcomeDlgDescription">欢迎使用 [ProductName] 维护向导。&#10;&#10;该向导允许您更改 [ProductName] 的安装方式, 或将其从计算机上移除。&#10;点击“下一步”继续, 或点击“取消”退出维护向导。</String>
+  <String Id="WixUI_MaintenanceTypeDlgTitle">更改、修复或移除安装</String>
+  <String Id="WixUI_MaintenanceTypeDlgChange">更改</String>
+  <String Id="WixUI_MaintenanceTypeDlgChangeText">添加或移除程序组件。</String>
+  <String Id="WixUI_MaintenanceTypeDlgRepair">修复</String>
+  <String Id="WixUI_MaintenanceTypeDlgRepairText">重新安装缺失或损坏的文件、快捷方式和注册表项。</String>
+  <String Id="WixUI_MaintenanceTypeDlgRemove">卸载</String>
+  <String Id="WixUI_MaintenanceTypeDlgRemoveText">从您的计算机上移除 [ProductName]。</String>
+
+  <!-- 浏览目录对话框 -->
+  <String Id="WixUI_BrowseDlgTitle">浏览文件夹</String>
+  <String Id="WixUI_BrowseDlgFolderLabel">文件夹名称:</String>
+  <String Id="WixUI_BrowseDlgGoUp">向上一级</String>
+  <String Id="WixUI_BrowseDlgNewFolder">新建文件夹</String>
+
+  <!-- 错误对话框 -->
+  <String Id="WixUI_ErrorDlgTitle">错误</String>
+  <String Id="WixUI_ErrorDlgErrorTitle">安装过程中发生错误</String>
+  <String Id="WixUI_ErrorDlgErrorText">安装过程中出现以下错误之一:</String>
+  <String Id="WixUI_ErrorDlgErrorNo">错误编号:</String>
+  <String Id="WixUI_ErrorDlgOk">确定</String>
+  <String Id="WixUI_ErrorDlgLog">日志</String>
+  <String Id="WixUI_ErrorDlgMessage">详细信息:</String>
+
+  <!-- 致命错误对话框 -->
+  <String Id="WixUI_FatalErrorDlgTitle">致命错误</String>
+  <String Id="WixUI_FatalErrorDlgDescription1">安装过程中出现错误, 安装无法完成。&#10;请修复错误后重试。</String>
+  <String Id="WixUI_FatalErrorDlgDescription2">要解决错误, 请关闭安装程序并重试。</String>
+  <String Id="WixUI_FatalErrorDlgDescription3">您可以点击“完成”退出安装向导。</String>
+
+  <!-- 用户退出对话框 -->
+  <String Id="WixUI_UserExitDlgTitle">退出安装</String>
+  <String Id="WixUI_UserExitDlgDescription">安装被中断, [ProductName] 未能安装。&#10;点击“完成”退出安装向导。</String>
+
+  <!-- 恢复安装对话框 -->
+  <String Id="WixUI_ResumeDlgTitle">继续安装</String>
+  <String Id="WixUI_ResumeDlgDescription">安装程序将继续在您的计算机上安装 [ProductName]。&#10;点击“安装”继续安装。</String>
+</WixLocalization>

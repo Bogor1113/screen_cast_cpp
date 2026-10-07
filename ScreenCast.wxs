@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ScreenCast.wxs -- WiX 源文件: 生成 MSI 安装包 (取代旧的 setup_pack 拼接式 EXE 安装包)
+
+  由 pack.ps1 调用 candle/light 编译。构建变量:
+    -dVersion  MSI 版本号 (a.b.c, 例如 3.4.0)
+    -dBuildDir payload 目录 (绝对路径, 例如 D:\screen_cast_cpp\build\Release)
+
+  安装内容 (perMachine, 安装到 Program Files\ScreenCast):
+    client_gui.exe   学生端
+    teacher_gui.exe  教师端
+    avcodec/avutil/swscale/swresample DLL (FFmpeg 运行库)
+  + 开始菜单快捷方式 (学生端 / 教师端)
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="ScreenCast 屏幕共享"
+           Language="1033"
+           Version="$(var.Version)"
+           Manufacturer="ScreenCast"
+           UpgradeCode="981D3654-FF00-4DB0-A306-DDE0136C4AC6">
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Manufacturer="ScreenCast"
+             Description="局域网屏幕共享 (教师端/学生端)"
+             Comments="ScreenCast v$(var.Version) -- 局域网屏幕共享" />
+
+    <MajorUpgrade DowngradeErrorMessage="已安装更高版本, 无法安装此版本。"
+                  AllowSameVersionUpgrades="yes" />
+    <MediaTemplate EmbedCab="yes" />
+    <Property Id="ALLUSERS" Value="1" Secure="yes" />
+
+    <Icon Id="ScreenCastIcon" SourceFile="$(var.BuildDir)\client_gui.exe" />
+
+    <!-- ================= 目录结构 ================= -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="ScreenCast">
+          <!-- 程序文件组件 -->
+          <Component Id="Comp_ClientGui" Guid="2630B246-CD83-4BAD-8AEE-AE809B9D5AB7">
+            <File Id="FileClientGui" Name="client_gui.exe"
+                  Source="$(var.BuildDir)\client_gui.exe" KeyPath="yes" />
+          </Component>
+          <Component Id="Comp_TeacherGui" Guid="D73B7821-9E75-4BC8-B9AD-699D557BBF9B">
+            <File Id="FileTeacherGui" Name="teacher_gui.exe"
+                  Source="$(var.BuildDir)\teacher_gui.exe" KeyPath="yes" />
+          </Component>
+          <Component Id="Comp_Avcodec" Guid="AF03DC72-B89F-4124-84C4-BB13A415AB14">
+            <File Id="FileAvcodec" Name="avcodec-63.dll"
+                  Source="$(var.BuildDir)\avcodec-63.dll" KeyPath="yes" />
+          </Component>
+          <Component Id="Comp_Avutil" Guid="3C4F5355-74DA-4DFD-827B-1B12509EEFCF">
+            <File Id="FileAvutil" Name="avutil-61.dll"
+                  Source="$(var.BuildDir)\avutil-61.dll" KeyPath="yes" />
+          </Component>
+          <Component Id="Comp_Swscale" Guid="FFBD6FF5-32F6-46E0-BC10-82E9FDA550FB">
+            <File Id="FileSwscale" Name="swscale-10.dll"
+                  Source="$(var.BuildDir)\swscale-10.dll" KeyPath="yes" />
+          </Component>
+          <Component Id="Comp_Swresample" Guid="14B0F4A5-8176-4AC8-A699-394960D29B3B">
+            <File Id="FileSwresample" Name="swresample-7.dll"
+                  Source="$(var.BuildDir)\swresample-7.dll" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <!-- 开始菜单快捷方式 -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppMenuDir" Name="ScreenCast">
+          <Component Id="Comp_Menu" Guid="F00DDD80-F6B8-4013-95AB-1A8F19094957">
+            <RemoveFolder Id="RemoveMenuDir" On="uninstall" />
+            <RegistryValue Root="HKCU" Key="Software\ScreenCast"
+                           Name="shortcut" Type="integer" Value="1" KeyPath="yes" />
+            <Shortcut Id="sc_client" Name="ScreenCast 学生端"
+                      Target="[#FileClientGui]" WorkingDirectory="INSTALLFOLDER" />
+            <Shortcut Id="sc_teacher" Name="ScreenCast 教师端"
+                      Target="[#FileTeacherGui]" WorkingDirectory="INSTALLFOLDER" />
+          </Component>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <!-- ================= 功能 ================= -->
+    <Feature Id="Complete" Title="ScreenCast" Level="1">
+      <ComponentRef Id="Comp_ClientGui" />
+      <ComponentRef Id="Comp_TeacherGui" />
+      <ComponentRef Id="Comp_Avcodec" />
+      <ComponentRef Id="Comp_Avutil" />
+      <ComponentRef Id="Comp_Swscale" />
+      <ComponentRef Id="Comp_Swresample" />
+      <ComponentRef Id="Comp_Menu" />
+    </Feature>
+
+    <!-- ================= UI ================= -->
+    <UIRef Id="WixUI_Minimal" />
+    <Property Id="ARPPRODUCTICON" Value="ScreenCastIcon" />
+  </Product>
+</Wix>

@@ -1,0 +1,2 @@
+// msi/client_gui.rc — 学生端 exe 图标资源 (与 msi/student.ico 同目录)
+APPICON ICON "student.ico"
